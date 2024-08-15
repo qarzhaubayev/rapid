@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  scheduler:
+    build:
+      context: .
+    ports:
+      - "9001:9001"
+    depends_on:
+      - db
+      - dqn
+    env_file:
+      - .env
+    environment:
+      MAX_CONNECTIONS: ${MAX_CONNECTIONS}
+      SCHEDULER_IP: ${SCHEDULER_IP}
+    networks:
+      - ds-network
+      - rapid-ac-network
+      - dqn-network
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: noticemesenpai
+      MYSQL_USER: user
+      MYSQL_PASSWORD: Astana123
+      MYSQL_DATABASE: DS
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./seed-mysql:/docker-entrypoint-initdb.d
+    networks:
+      - ds-network
+  wakeonlan:
+    build:
+      context: target-wakeonlan/
+    network_mode: host
+  dqn:
+    build:
+      context: .
+      dockerfile: Dockerfile.dqn
+    ports:
+      - "8000:8000"
+    networks:
+      - dqn-network
+networks:
+  ds-network:
+    name: ds-network
+  rapid-ac-network:
+    internal: true
+  dqn-network:
+    driver: bridge
